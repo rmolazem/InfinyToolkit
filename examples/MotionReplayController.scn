@@ -95,12 +95,12 @@
               input="@../mechanicalDofs"
               output="@Visual_arteries" />
 
-            <MotionReplayController
+            <!-- <MotionReplayController
             name="motionReplay"
             motionFile="grid_states.csv"
             gridState="@mechanicalDofs"
             fixedIndices = "@TopROI.indices"
-        />
+        /> -->
 
 
         </Node>
@@ -114,12 +114,12 @@
         <FixedProjectiveConstraint indices="@TopROI.indices" />
          -->
         <!-- Motion Replay Controller -->
-        <!-- <MotionReplayController
+        <MotionReplayController
             name="motionReplay"
             motionFile="grid_states.csv"
             gridState="@mechanicalDofs"
             fixedIndices = "@patient_Arteries/TopROI.indices"
-        /> -->
+        />
 
     </Node>
 
