@@ -39,27 +39,78 @@
         />
 
         <Node name="VisuGrid">
-            <OglModel color="green" src="@../mechanicalDofs" name="Visual" />
+            <OglModel color="blue" src="@../mechanicalDofs" name="Visual" />
             <IdentityMapping input="@../" output="@Visual"/>
         </Node>
 
-        
-        <!-- Fixed indices-->
-        <BoxROI name="TopROI"
-        drawBoxes="0"
-        box="-3.0 -5.0 -4.0  1.5 -3.5 2.0" />
+        <Node name="patient_Arteries">
+            <MeshOBJLoader 
+               name="loader_arteries"
+               filename="full_arteries_collision.obj"
+               rotation="90 0 0"
+               scale3d="0.1 0.1 0.1"
+               translation="0 0 0"
+               flipNormals="1" />
 
-        <FixedProjectiveConstraint indices="@TopROI.indices" />
-        
+            <!-- Topology -->
+            <MeshTopology 
+                name="arteriesTopo"
+                src="@loader_arteries" />
+
+            <!-- Mechanical Object -->
+            <MechanicalObject 
+                name="arteriesDOFs"
+                template="Vec3d"
+                src="@loader_arteries" />
+
+            <!-- ROI + Constraint -->
+            <BoxROI 
+                name="TopROI"
+                drawBoxes="1"
+                 box="-3.0 -5.0 -4.0  1.5 -3.5 2.0" />
+
+            <FixedConstraint 
+                indices="@TopROI.indices" />
+
+            <!-- Mapping (only if heartBeat is true) -->
+            <BarycentricMapping 
+                 name="arteryMapper"
+                 input="@../mechanicalDofs"
+                 output="@arteriesDOFs" />
+
+            <!-- Expose the engine explicitly (if needed) -->
+            <MeshBarycentricMapperEngine
+                 name="bMappingEngine"
+                 topology="@arteriesTopo" />
+
+            <!-- Visual representation -->
+            <OglModel 
+                 name="Visual_arteries"
+                 src="@loader_arteries"
+                 color="green" />
+
+            <!-- Map motion from the grid to the visual mesh -->
+            <BarycentricMapping
+              name="mapping"
+              input="@../mechanicalDofs"
+              output="@Visual_arteries" />
+
+
+        </Node>
+
+       
         <!-- Motion Replay Controller -->
         <MotionReplayController
             name="motionReplay"
             motionFile="grid_states.csv"
             dt="0.02"
             gridState="@mechanicalDofs"
-            topROI = "@TopROI"
+            fixedIndices = "@patient_Arteries/TopROI.indices"
+            mapperEngine = "@patient_Arteries/bMappingEngine"
             breathing = "True"
         />
+  
+        
 
     </Node>
 

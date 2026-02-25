@@ -31,7 +31,8 @@
 #include <sofa/core/objectmodel/Context.h>
 #include <sofa/core/objectmodel/DataFileName.cpp>
 #include <sofa/core/topology/Topology.h>
-#include <sofa/component/engine/select/BoxROI.h>
+
+
 
 #include <sofa/helper/logging/Messaging.h>
 #include <sofa/simulation/AnimateBeginEvent.h>
@@ -47,6 +48,7 @@ namespace sofa::infinytoolkit
 
     MotionReplayController::MotionReplayController()
         :l_gridState(initLink("gridState","Link to the grid control."))
+        , l_mapperEngine(initLink("mapperEngine","Link to the mapper."))
         , d_fixedIndices(initData(&d_fixedIndices,"fixedIndices","Indices of the nodes that should be fixed."))
         , d_motionFile(initData(&d_motionFile, "motionFile",
             "Path to CSV motion file, where each row contains one frame."))
@@ -70,16 +72,40 @@ void MotionReplayController::init()
        
           }
 
-       
-        const auto& fixIndices = d_fixedIndices.getValue();
+        std::cerr << "Fixed indices in controller: " << d_fixedIndices.getValue().size();
+        const auto& fixedIndices = d_fixedIndices.getValue();
 
-        if (fixIndices.empty())
+        if (fixedIndices.empty())
         {
             msg_warning() << "No fixed indices provided.";
             return;
         }
        
+        if (!l_mapperEngine.get())
+        {
+            msg_error() << "Mapper engine not linked!";
+            return;
+        }
 
+        auto* engine = l_mapperEngine.get();
+        const auto& interpolation_indices = engine->d_interpolationIndices.getValue();
+
+        // Suppose you already know arteryTopIndices
+        for (auto slaveId : fixedIndices)
+        {
+            // Get the master indices influencing this slave vertex
+            const auto& masterList = interpolation_indices[slaveId];
+
+            for (auto masterId : masterList)
+            {
+                m_fixedGridIndices.insert(masterId);
+            }
+        }
+
+        msg_info() << "Number of fixed grid nodes: "
+            << m_fixedGridIndices.size();
+
+       
         this->f_listening.setValue(true);
 
         loadMotion();
@@ -125,10 +151,9 @@ void MotionReplayController::handleEvent(sofa::core::objectmodel::Event* event)
 
             
 
-        const auto& fixedIndices = d_fixedIndices.getValue();
         std::unordered_set<unsigned int> fixedSet(
-            fixedIndices.begin(),
-            fixedIndices.end()
+            d_fixedIndices.getValue().begin(),
+            d_fixedIndices.getValue().end()
         );
 
         for (size_t i = 0; i < positions.size(); ++i)

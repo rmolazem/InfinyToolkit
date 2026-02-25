@@ -27,6 +27,8 @@
 
 #include <sofa/component/controller/Controller.h>
 #include <sofa/component/engine/select/BoxROI.h>
+#include <sofa/component/engine/generate/MeshBarycentricMapperEngine.h>
+
 
 
 #include <sofa/type/Vec.h>
@@ -38,6 +40,7 @@
 
 #include <vector>
 #include <string>
+#include <unordered_set>
 
 namespace sofa::infinytoolkit
 {
@@ -56,6 +59,9 @@ public:
 
    using Coord = sofa::type::Vec3d;
    using VecCoord = std::vector<Coord>;
+   using Engine = sofa::component::engine::generate::
+       MeshBarycentricMapperEngine<sofa::defaulttype::Vec3dTypes>;
+
 
    // Store fixed indices those won't move while breathing
    sofa::core::objectmodel::DataFileName d_motionFile; /// CSV file containing the frames
@@ -74,10 +80,15 @@ private:
         sofa::core::behavior::MechanicalState<sofa::defaulttype::Vec3dTypes>,
         BaseLink::FLAG_STOREPATH | BaseLink::FLAG_STRONGLINK> l_gridState;
 
+    SingleLink<MotionReplayController,Engine,
+        BaseLink::FLAG_STOREPATH | BaseLink::FLAG_STRONGLINK> l_mapperEngine;
+
     size_t currentIndex{0};
 
     // Stored frames from CSV
     std::vector<VecCoord> frames;
+
+    std::unordered_set<sofa::Index> m_fixedGridIndices;
    
     // Loads motion from CSV
     void loadMotion();
