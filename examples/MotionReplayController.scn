@@ -81,6 +81,7 @@
             <!-- Expose the engine explicitly (if needed) -->
             <MeshBarycentricMapperEngine
                  name="bMappingEngine"
+                 computeLinearInterpolation = "true"
                  topology="@arteriesTopo" />
 
             <!-- Visual representation -->
@@ -104,7 +105,8 @@
             name="motionReplay"
             motionFile="grid_states.csv"
             gridState="@mechanicalDofs"
-            fixedIndices = "@TopROI.indices"
+            fixedIndices = "@patient_Arteries/TopROI.indices"
+            MapperEngine = "@patient_Arteries/bMappingEngine"
         />
   
         
