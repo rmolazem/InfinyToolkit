@@ -57,7 +57,7 @@ public:
    using Engine = sofa::component::engine::generate::
        MeshBarycentricMapperEngine<sofa::defaulttype::Vec3dTypes>;
 
-
+   
    // Store fixed indices those won't move while breathing
    sofa::core::objectmodel::DataFileName d_motionFile; /// CSV file containing the frames
    sofa::core::objectmodel::Data<double> d_dvfTimeStep; /// Time step used to record grid's deformation
@@ -76,8 +76,8 @@ private:
         sofa::core::behavior::MechanicalState<sofa::defaulttype::Vec3dTypes>,
         BaseLink::FLAG_STOREPATH | BaseLink::FLAG_STRONGLINK> l_gridState;
 
-    SingleLink<MotionReplayController,Engine,
-        BaseLink::FLAG_STOREPATH | BaseLink::FLAG_STRONGLINK> l_mapperEngine;
+    SingleLink<MotionReplayController, Engine, BaseLink::FLAG_STOREPATH | BaseLink::FLAG_STRONGLINK> l_engine;
+
 
     size_t currentIndex{0};
 

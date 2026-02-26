@@ -33,6 +33,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <iostream>
 #include <string>
 #include <unordered_set>
 
@@ -52,6 +53,7 @@ namespace sofa::infinytoolkit
 
     MotionReplayController::MotionReplayController()
         :l_gridState(initLink("gridState", "Link to the grid control."))
+        , l_engine(initLink("MapperEngine", "MeshBarycentricMapperEngine that drives child MO."))
         , d_fixedIndices(initData(&d_fixedIndices, "fixedIndices", "Indices of the nodes that should be fixed."))
         , d_motionFile(initData(&d_motionFile, "motionFile",
             "Path to CSV motion file, where each row contains one frame."))
@@ -105,7 +107,6 @@ namespace sofa::infinytoolkit
 
     void MotionReplayController::handleEvent(sofa::core::objectmodel::Event* event)
     {
-
         if (!sofa::simulation::AnimateBeginEvent::checkEventType(event))
             return;
 
@@ -141,31 +142,85 @@ namespace sofa::infinytoolkit
             offset = amplitudeOffset * sin(2.0 * M_PI * frequency * t);
         }
 
-        const auto& fixedIndices = d_fixedIndices.getValue();
+        const auto& fixedChildIndices = d_fixedIndices.getValue();
 
-        if (fixedIndices.empty())
+        if (fixedChildIndices.empty())
         {
             msg_warning() << "No fixed indices provided.";
             return;
         }
 
-        std::unordered_set<unsigned int> fixedSet(
-            fixedIndices.begin(),
-            fixedIndices.end()
-        );
+        // Print each index
+        std::cout << "Fixed child indices: ";
+        for (auto idx : fixedChildIndices)
+        {
+            std::cout << idx << " ";
+        }
+        std::cout << std::endl;
 
+ 
+        if (l_engine.get() == nullptr)
+        {
+            msg_error() << "Engine not connected or wrong type!";
+            return;
+        }
+
+        // Compute the grid nodes to fix (any grid node influencing a fixed child node)
+        std::unordered_set<unsigned int> fixedGridNodes;
+
+        for (unsigned int childIndex : fixedChildIndices)
+        {
+            std::cerr << childIndex << std::endl;
+            if (childIndex >= l_engine->d_interpolationIndices.getValue().size())
+                continue;
+
+            const auto& parentIndices = l_engine->d_interpolationIndices.getValue()[childIndex];
+            // Debug print
+          /*  std::cout << "Child node " << childIndex << " influenced by grid nodes: ";
+            for (auto idx : parentIndices)
+                std::cout << idx << " ";
+            std::cout << "\n";*/
+
+
+
+            fixedGridNodes.insert(parentIndices.begin(), parentIndices.end());
+        }
+
+        // Apply frame positions + offset, skipping fixed grid nodes
+        int axis = d_displacementAxis.getValue(); // 0=X, 1=Y, 2=Z
         for (size_t i = 0; i < positions.size(); ++i)
         {
-            positions[i][0] = frames[currentIndex][i][0];
-            positions[i][1] = frames[currentIndex][i][1];
-            positions[i][2] = frames[currentIndex][i][2];
+            // Set base frame position
+            positions[i] = frames[currentIndex][i];
 
-            if (fixedSet.find(static_cast<unsigned int>(i)) == fixedSet.end())
-            {
-                int axis = d_displacementAxis.getValue();  // 0=X, 1=Y, 2=Z
-                positions[i][1] += offset;
-            }
+            // Skip fixed nodes
+            if (fixedGridNodes.find(static_cast<unsigned int>(i)) != fixedGridNodes.end())
+                continue;
+
+            // Apply offset along selected axis
+            positions[i][axis] += offset;
         }
+
+
+
+
+        //std::unordered_set<unsigned int> fixedSet(
+        //    fixedIndices.begin(),
+        //    fixedIndices.end()
+        //);
+
+        //for (size_t i = 0; i < positions.size(); ++i)
+        //{
+        //    positions[i][0] = frames[currentIndex][i][0];
+        //    positions[i][1] = frames[currentIndex][i][1];
+        //    positions[i][2] = frames[currentIndex][i][2];
+
+        //    if (fixedSet.find(static_cast<unsigned int>(i)) == fixedSet.end())
+        //    {
+        //        int axis = d_displacementAxis.getValue();  // 0=X, 1=Y, 2=Z
+        //        positions[i][1] += offset;
+        //    }
+        //}
 
      ++currentIndex;
     }
