@@ -103,11 +103,8 @@
         <MotionReplayController
             name="motionReplay"
             motionFile="grid_states.csv"
-            dt="0.02"
             gridState="@mechanicalDofs"
-            fixedIndices = "@patient_Arteries/TopROI.indices"
-            mapperEngine = "@patient_Arteries/bMappingEngine"
-            breathing = "True"
+            fixedIndices = "@TopROI.indices"
         />
   
         
