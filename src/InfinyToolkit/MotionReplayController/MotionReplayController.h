@@ -33,6 +33,9 @@
 #include <sofa/core/objectmodel/Event.h>
 #include <sofa/core/objectmodel/DataFileName.h>
 
+#include <sofa/core/visual/VisualParams.h>
+//#include <sofa/helper/visual/DrawTool.h>
+
 #include <vector>
 #include <string>
 #include <unordered_set>
@@ -68,6 +71,7 @@ public:
 
    void init() override;
    void handleEvent(sofa::core::objectmodel::Event* event) override;
+   void draw(const sofa::core::visual::VisualParams* vparams) override;
 
 private:
     
@@ -85,6 +89,8 @@ private:
     std::vector<VecCoord> frames;
 
     std::unordered_set<sofa::Index> m_fixedGridIndices;
+
+    std::vector<unsigned int> m_debugParentIndices;
    
     // Loads motion from CSV
     void loadMotion();

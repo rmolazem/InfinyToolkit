@@ -79,6 +79,15 @@ namespace sofa::infinytoolkit
 
         }
 
+        if (!l_engine)
+        {
+            msg_error() << "Engine not linked!";
+            return;
+        }
+
+        // Force computation once scene is ready
+        l_engine->update();
+
         int axis = d_displacementAxis.getValue();
 
         if (axis < 0 || axis > 2)
@@ -150,15 +159,7 @@ namespace sofa::infinytoolkit
             return;
         }
 
-        // Print each index
-        std::cout << "Fixed child indices: ";
-        for (auto idx : fixedChildIndices)
-        {
-            std::cout << idx << " ";
-        }
-        std::cout << std::endl;
-
- 
+     
         if (l_engine.get() == nullptr)
         {
             msg_error() << "Engine not connected or wrong type!";
@@ -170,13 +171,18 @@ namespace sofa::infinytoolkit
 
         for (unsigned int childIndex : fixedChildIndices)
         {
-            std::cerr << childIndex << std::endl;
             if (childIndex >= l_engine->d_interpolationIndices.getValue().size())
                 continue;
 
             const auto& parentIndices = l_engine->d_interpolationIndices.getValue()[childIndex];
+
+            m_debugParentIndices.insert(
+                m_debugParentIndices.end(),
+                parentIndices.begin(),
+                parentIndices.end());
+            
             // Debug print
-          /*  std::cout << "Child node " << childIndex << " influenced by grid nodes: ";
+           /* std::cout << "Child node " << childIndex << " influenced by grid nodes: ";
             for (auto idx : parentIndices)
                 std::cout << idx << " ";
             std::cout << "\n";*/
@@ -201,26 +207,6 @@ namespace sofa::infinytoolkit
             positions[i][axis] += offset;
         }
 
-
-
-
-        //std::unordered_set<unsigned int> fixedSet(
-        //    fixedIndices.begin(),
-        //    fixedIndices.end()
-        //);
-
-        //for (size_t i = 0; i < positions.size(); ++i)
-        //{
-        //    positions[i][0] = frames[currentIndex][i][0];
-        //    positions[i][1] = frames[currentIndex][i][1];
-        //    positions[i][2] = frames[currentIndex][i][2];
-
-        //    if (fixedSet.find(static_cast<unsigned int>(i)) == fixedSet.end())
-        //    {
-        //        int axis = d_displacementAxis.getValue();  // 0=X, 1=Y, 2=Z
-        //        positions[i][1] += offset;
-        //    }
-        //}
 
      ++currentIndex;
     }
@@ -290,6 +276,28 @@ namespace sofa::infinytoolkit
             << " frames from " << filename;
     }
 
+    void MotionReplayController::draw(const sofa::core::visual::VisualParams* vparams)
+    {
+        if (!vparams->displayFlags().getShowBehaviorModels())
+            return;
 
+        if (!l_gridState)
+            return;
+
+        const auto& positions = l_gridState->readPositions();
+        auto* drawTool = vparams->drawTool();
+        if (!drawTool)
+            return;
+
+        drawTool->setMaterial(sofa::type::RGBAColor(1.0, 0.0, 0.0, 1.0)); // red
+
+        for (auto idx : m_debugParentIndices)
+        {
+            if (idx >= positions.size())
+                continue;
+
+            drawTool->drawSphere(positions[idx], 0.5);
+        }
+    }
 
 } // namespace sofa::infinytoolkit
