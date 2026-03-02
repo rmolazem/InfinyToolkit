@@ -10,7 +10,7 @@
     <RequiredPlugin name="Sofa.Component.Engine.Select"/> <!-- Needed to use components [BoxROI] -->
     <RequiredPlugin name="InfinyToolkit"/> <!-- Needed to use MotionReplayController -->
 
-    <VisualStyle displayFlags="showVisual showWireframe showBehavior"/>
+    <VisualStyle displayFlags="showVisual showWireframe showBehaviorModels"/>
 
 
     <!-- Animation and Visual Loops -->
@@ -82,6 +82,8 @@
             <MeshBarycentricMapperEngine
                  name="bMappingEngine"
                  computeLinearInterpolation = "true"
+                 inputPositions="@../grid.position" 
+                 mappedPointPositions="@./arteriesTopo.position"
                  topology="@arteriesTopo" />
 
             <!-- Visual representation -->
@@ -106,6 +108,7 @@
             motionFile="grid_states.csv"
             gridState="@mechanicalDofs"
             fixedIndices = "@patient_Arteries/TopROI.indices"
+            displacementAmplitude = "0.3"
             MapperEngine = "@patient_Arteries/bMappingEngine"
         />
   
